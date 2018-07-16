@@ -2,6 +2,7 @@
 #include "BaseFunc.h"
 #include "SateBase.h"
 #include "DateTime.h"
+#include <algorithm>
 #ifdef ATTSIMDLL
 #define ATTSIMDLL extern "C" _declspec(dllimport) 
 #else
@@ -81,6 +82,7 @@ public:
 	void calcuOmega(Quat qL, Quat qR, Gyro &wTrue);
 	//转换数据
 	void transCrj2StarGyro(vector<Quat>qTrueInter1,vector<Gyro>wTrue,attGFDM &attMeas,bool isErr);
+	void calcOmegaFromST(const vector<Quat>quatMeas, string outName);//根据星敏计算角速度
 	//增加误差
 	void addErrorForQuat(vector<Quat>&qSim);
 	void addErrorForGyro(vector<double>&wSim);
@@ -98,6 +100,8 @@ public:
 	void outputQuatZY3(vector<Quat>qOut, string name);
 	void outputBias(double *Bias, int num, string name);
 private:
+	//升序降序函数
+	bool static LessSort(BmImStar a, BmImStar b);
 	int nQuat, nGyro;//全局变量，四元数和陀螺的数量
 	AttParm attDat;	isStarGyro starGyro;
 	string path;

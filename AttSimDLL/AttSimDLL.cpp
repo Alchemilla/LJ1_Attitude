@@ -1330,8 +1330,8 @@ void attSim::getQuatAndGyroForLuoJia1(attLJ1 &attMeas)
 	Quat attReadA;
 	while (!feof(fp1))
 	{
-		fscanf(fp1, "%lf\t%lf\t%lf\t%lf\t%lf\n", &attReadA.UT, &attReadA.q4,
-			&attReadA.q1, &attReadA.q2, &attReadA.q3);
+		fscanf(fp1, "%lf\t%lf\t%lf\t%lf\t%lf\n", &attReadA.UT,
+			&attReadA.q1, &attReadA.q2, &attReadA.q3, &attReadA.q4);
 		attMeas.qA.push_back(attReadA);
 	}
 	fclose(fp1);
@@ -1339,8 +1339,8 @@ void attSim::getQuatAndGyroForLuoJia1(attLJ1 &attMeas)
 	Quat attReadB;
 	while (!feof(fp1))
 	{
-		fscanf(fp1, "%lf\t%lf\t%lf\t%lf\t%lf\n", &attReadB.UT, &attReadB.q4,
-			&attReadB.q1, &attReadB.q2, &attReadB.q3);
+		fscanf(fp1, "%lf\t%lf\t%lf\t%lf\t%lf\n", &attReadB.UT,
+			&attReadB.q1, &attReadB.q2, &attReadB.q3, &attReadB.q4);
 		attMeas.qB.push_back(attReadB);
 	}
 	fclose(fp1);
@@ -3019,13 +3019,25 @@ void attSim::preAttparamForLJ1(attLJ1 measLJ1, Quat &q0,
 	double qAalin[9], qBalin[9];
 	mBase.quat2matrix(starAali_LJ1[1], starAali_LJ1[2], starAali_LJ1[3], starAali_LJ1[0], qAalin);
 	mBase.quat2matrix(starBali_LJ1[1], starBali_LJ1[2], starBali_LJ1[3], starBali_LJ1[0], qBalin);
+
+	vector<Quat>quatMeas;
+	for (int a = 0; a < measLJ1.qA.size(); a++)
+	{		
+		mBase.quat2matrix(measLJ1.qA[a].q1, measLJ1.qA[a].q2, measLJ1.qA[a].q3, measLJ1.qA[a].q4, Crj);
+		memcpy(Cbr, qAalin, sizeof(double) * 9);//Cbr
+		mBase.Multi(Cbr, Crj, Cbj, 3, 3, 3);
+		mBase.matrix2quat(Cbj, q0.q1, q0.q2, q0.q3, q0.q4);
+		q0.UT = measLJ1.qA[a].UT;
+		quatMeas.push_back(q0);
+	}
+	calcOmegaFromST(quatMeas, "StarACalcOmega.txt");
+
 	vector<BmImStar>BmImTmp;
 	for (int a = 0; a < measLJ1.qA.size(); a++)
 	{
 		BmImStar BmImTmp2;
 		mBase.quat2matrix(measLJ1.qA[a].q1, measLJ1.qA[a].q2, measLJ1.qA[a].q3, measLJ1.qA[a].q4, Crj);
-		memcpy(Cbr, qAalin, sizeof(double) * 9);//Crb
-		mBase.invers_matrix(Cbr, 3);//Cbr
+		memcpy(Cbr, qAalin, sizeof(double) * 9);//Cbr
 		if (a == 0)
 		{
 			mBase.Multi(Cbr, Crj, Cbj, 3, 3, 3);
@@ -3039,12 +3051,12 @@ void attSim::preAttparamForLJ1(attLJ1 measLJ1, Quat &q0,
 		BmImTmp2.UT = measLJ1.qA[a].UT;
 		BmImTmp.push_back(BmImTmp2);
 	}
+
 	for (int a = 0; a < measLJ1.qB.size(); a++)
 	{
 		BmImStar BmImTmp2;
 		mBase.quat2matrix(measLJ1.qB[a].q1, measLJ1.qB[a].q2, measLJ1.qB[a].q3, measLJ1.qB[a].q4, Crj);
-		memcpy(Cbr, qBalin, sizeof(double) * 9);//Crb
-		mBase.invers_matrix(Cbr, 3);//Cbr
+		memcpy(Cbr, qBalin, sizeof(double) * 9);//Cbr
 		if (a == 0)
 		{
 			mBase.Multi(Cbr, Crj, Cbj, 3, 3, 3);
@@ -3059,13 +3071,14 @@ void attSim::preAttparamForLJ1(attLJ1 measLJ1, Quat &q0,
 		BmImTmp.push_back(BmImTmp2);
 	}
 	//需要排序
+	sort(BmImTmp.begin(),BmImTmp.end(),LessSort);
 	BmIm.push_back(BmImTmp);
 	
 	double gyroOri[3], gyroTrans[3];
 	for (int a = 0; a < measLJ1.gy.size(); a++)
 	{		
 		gyroOri[0] = measLJ1.gy.at(a).wx; gyroOri[1] = measLJ1.gy.at(a).wy; gyroOri[2] = measLJ1.gy.at(a).wz;
-		mBase.Multi(gyroOri,gyroali_LJ1,gyroTrans, 1,3,1);
+		mBase.Multi(gyroali_LJ1,gyroOri,gyroTrans,3,3,1);
 		Gyro wTmp;
 		wTmp.UT = measLJ1.gy.at(a).UT; wTmp.wx = gyroTrans[0], wTmp.wy = gyroTrans[1], wTmp.wz = gyroTrans[2];
 		wMeas.push_back(wTmp);
@@ -3262,6 +3275,31 @@ void attSim::transCrj2StarGyro(vector<Quat>qTrueInter1,
 	if (isErr == true && starGyro.isG31 == true)		addErrorForFiberGyroActive(attMeas.gy31);
 	if (isErr == true && starGyro.isG32 == true)		addErrorForFiberGyroActive(attMeas.gy32);
 	if (isErr == true && starGyro.isG33 == true)		addErrorForFiberGyroActive(attMeas.gy33);
+}
+//////////////////////////////////////////////////////////////////////////
+//功能：根据星敏求角速度
+//作者：GZC
+//日期：2018.07.16
+//////////////////////////////////////////////////////////////////////////
+void attSim::calcOmegaFromST(const vector<Quat>quatMeas, string outName)
+{
+	string resPath = path+"\\"+ outName;
+	FILE *fp = fopen(resPath.c_str(), "w");
+	double qL[4], qR[4], qRes[4];
+	for (int i = 0; i < quatMeas.size() - 1; i++)
+	{
+		qL[0] = quatMeas[i].q1, qL[1] = quatMeas[i].q2, qL[2] = quatMeas[i].q3, qL[3] = quatMeas[i].q4;
+		qR[0] = quatMeas[i + 1].q1, qR[1] = quatMeas[i + 1].q2,
+			qR[2] = quatMeas[i + 1].q3, qR[3] = -quatMeas[i + 1].q4;
+		mBase.quatMult(qR, qL, qRes);
+		double omega[3], domega[3], dt;
+		dt = quatMeas[i + 1].UT - quatMeas[i].UT;
+		omega[0] = qRes[0] * 2 / dt / PI * 180;
+		omega[1] = qRes[1] * 2 / dt / PI * 180;
+		omega[2] = qRes[2] * 2 / dt / PI * 180;
+		fprintf(fp, "%.9f\t%.9f\t%.9f\t%.9f\n", quatMeas[i].UT, omega[0], omega[1], omega[2]);
+	}
+	fclose(fp);
 }
 //////////////////////////////////////////////////////////////////////////
 //功能：添加星敏误差(被动推扫)
@@ -3569,6 +3607,11 @@ void attSim::outputBias(double *Bias, int num, string name)
 	}
 	fclose(fp);
 }
+/////////////////////////////////////////
+//定义升序降序排列的函数，从小到大
+////////////////////////////////////////
+inline bool attSim::LessSort(BmImStar a, BmImStar b) { return a.UT < b.UT; }
+
 /////////////////////////////////////////////////////////////////////////
 //功能：姿态仿真（外部接口）
 //输入：工作路径：workpath，传感器指标：mAtt，星敏陀螺参与指示：starGyro
@@ -3892,3 +3935,4 @@ void attitudeDeterActivePushbroomStruct(AttParm mAtt, double BeforeAfterT[2],
 	delete[]wMeas; wMeas = NULL;
 	delete[]quatEst; quatEst = NULL;
 }
+
