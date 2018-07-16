@@ -42,6 +42,8 @@ ATTSIMDLL void attitudeDeterActivePushbroomStruct(AttParm mAtt,
 //读取外部数据（包括主动推扫）然后仿真姿态
 ATTSIMDLL void ExternalFileAttitudeSim(char * workpath, AttParm mAtt, isStarGyro starGy);
 ATTSIMDLL void ExternalFileAttitudeDeter(char * workpath, AttParm mAtt, isStarGyro starGy, BOOL isBinFilter);
+//珞珈一号数据处理
+ATTSIMDLL void luojia1AttitudeDeter(char * workpath, AttParm mAtt, BOOL isBinFilter);
 
 class attSim
 {
@@ -51,6 +53,7 @@ public:
 	//获取各种参数
 	void getInstallParam(AttParm mAtt);
 	void getQuatAndGyro(attGFDM &attMeas);
+	void getQuatAndGyroForLuoJia1(attLJ1 &attMeas);
 	void getAttParam(AttParm mAtt,string workpath);
 	void getAttParam(AttParm mAtt, string workpath, isStarGyro starGy);
 	void getQnGnum(int nQ, int nG);
@@ -73,6 +76,7 @@ public:
 	bool readAttJitterparam(vector<AttJitter>&vecJitter);
 	void readAttJitterTXT(vector<Gyro>&wMeas);
 	void preAttparam(attGFDM attMeas,Quat &q0, vector<vector<BmImStar>>&BmIm, vector<Gyro>&wMeas);
+	void preAttparamForLJ1(attLJ1 measLJ1, Quat &q0, vector<vector<BmImStar>>&BmIm, vector<Gyro>&wMeas);
 	void predictQuat(Gyro wMeas, Quat &Qk, double dt);
 	void calcuOmega(Quat qL, Quat qR, Gyro &wTrue);
 	//转换数据
@@ -98,5 +102,6 @@ private:
 	AttParm attDat;	isStarGyro starGyro;
 	string path;
 	static double starAali[9], starBali[9], starCali[9];//星敏安装
+	static double starAali_LJ1[4], starBali_LJ1[4], gyroali_LJ1[9];//珞珈一号星敏陀螺安装（四元数形式）
 	static double G11[3], G12[3], G13[3], G21[3], G22[3], G23[3], G31[3], G32[3], G33[3];//陀螺安装
 };

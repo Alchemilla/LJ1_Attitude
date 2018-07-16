@@ -327,6 +327,7 @@ namespace AttSimCPP
             ShowInfo("欢迎来到姿态确定仿真程序！");
             SetDefaultText();
             SetTabPage3Default();
+            SetTabPage2Default();
         }
         /// <summary>
         /// 功能：设置保存目录
@@ -424,6 +425,8 @@ namespace AttSimCPP
             simAtt1.Text = "双向星敏噪声";
             simAtt1.Show();
         }
+
+
         /// <summary>
         /// 功能：考虑陀螺安装和尺度
         /// </summary>
@@ -597,8 +600,11 @@ namespace AttSimCPP
             }
             DLLImport.ExternalData(path,mAtt);
         }
-
-
+        /// <summary>
+        /// 事后定姿默认参数
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void SetTabPage3Default()
         {
             checkBox1.Checked = checkBox2.Checked = checkBox4.Checked = 
@@ -822,6 +828,60 @@ namespace AttSimCPP
             }
             else
                 ShowInfo("失败：未设置路径");    
+        }
+        /// <summary>
+        /// 珞珈一号默认参数
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SetTabPage2Default()
+        {
+            textBox14.Text = "1";//星敏噪声
+            textBox28.Text = "0.006";//陀螺噪声
+            textBox26.Text = "0.0005";//随机游走
+            textBox29.Text = path;
+        }
+        /// <summary>
+        /// 珞珈一号滤波
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button20_Click(object sender, EventArgs e)
+        {
+            //星敏参数
+            mAtt.sig_ST = double.Parse(textBox14.Text);//星敏误差(单位：角秒) 
+            //陀螺噪声
+            mAtt.sigv = double.Parse(textBox28.Text) * 1e-4;
+            //漂移噪声
+            mAtt.sigu = double.Parse(textBox26.Text) * 1e-5;
+            //星敏安装矩阵
+            mAtt.install = textBox13.Text;
+            //姿态文件路径
+            mAtt.sSimAtt = textBox29.Text;
+
+            progressBar1.Minimum = 0;
+            progressBar1.Maximum = 100;
+            progressBar1.Value = 40;
+            
+            if (!File.Exists(path + "\\qa.txt")|| !File.Exists(path + "\\qb.txt")|| !File.Exists(path + "\\gyro.txt"))
+            {
+                ShowInfo("没有qa,qb,gyro文件");
+                MessageBox.Show("请设置真实数据路径（包含qa,qb,gyro的txt文件）", "警告", MessageBoxButtons.OK);
+                return;
+            }
+            
+            ShowInfo("开始姿态确定...");
+            if (radioButton5.Checked == true)
+            {
+                DLLImport.luojia1AttitudeDeter(path, mAtt, false);
+            }
+            else if (radioButton6.Checked == true)
+            {
+                DLLImport.luojia1AttitudeDeter(path, mAtt, true);
+            }
+
+            ShowInfo("姿态确定完毕");
+            progressBar1.Value = 100;
         }
 
     }

@@ -80,7 +80,12 @@ struct attGFDM
 	vector<Quat> qA, qB, qC;//三颗星敏
 	vector<double>UT, gy11, gy12, gy13, gy21, gy22, gy23, gy31, gy32, gy33;//两组三浮陀螺，一组光纤陀螺
 };
-
+//珞珈一号星敏陀螺参数
+struct attLJ1
+{
+	vector<Quat> qA, qB;//两颗星敏
+	vector<Gyro> gy;//一组陀螺
+};
 //轨道离散点信息
 struct orbGFDM
 {

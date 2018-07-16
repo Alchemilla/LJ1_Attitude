@@ -148,6 +148,13 @@ namespace AttSimCPP
         [DllImport("AttSimDLL.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern void ExternalFileAttitudeDeter(string path, AttParm mAtt, isStarGyro starGyro,bool isBinFilter);
 
+        /// <summary>
+        /// 珞珈一号姿态数据处理
+        /// </summary>
+        /// <param name="path"></param>
+        [DllImport("AttSimDLL.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void luojia1AttitudeDeter(string path, AttParm mAtt, bool isBinFilter);
+
         //以下函数暂时不用
         /// <summary>
         /// 姿态仿真和卡尔曼滤波
