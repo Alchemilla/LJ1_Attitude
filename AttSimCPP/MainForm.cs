@@ -446,7 +446,9 @@ namespace AttSimCPP
             textBox10.Text = "0,0,0,0,0,0,0,0,0";
             textBox10.Enabled = false;
             button1.Enabled = true;
-        }        
+        }
+
+
         /// <summary>
         /// 功能：主动推扫模式仿真
         /// 日期：2017.10.18
@@ -568,7 +570,9 @@ namespace AttSimCPP
             button7.Enabled = true;
             button9.Enabled = true;
             button10.Enabled = true;
-        }        
+        }
+
+
         /// <summary>
         /// 功能：将外部程序仿真的姿态转换为陀螺角速度
         /// 日期：2017.09.06
@@ -840,6 +844,44 @@ namespace AttSimCPP
             textBox28.Text = "0.006";//陀螺噪声
             textBox26.Text = "0.0005";//随机游走
             textBox29.Text = path;
+        }
+        /// <summary>
+        /// 珞珈一号设置数据目录
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button19_Click(object sender, EventArgs e)
+        {
+            ShowInfo("选择定姿文件路径");
+            OpenFileDialog openDlg = new OpenFileDialog();
+            if (openDlg.ShowDialog() == DialogResult.OK)
+            {
+                string localFilePath = openDlg.FileName.ToString(); //获得文件路径 
+                path = localFilePath.Substring(0, localFilePath.LastIndexOf("\\")); ;
+                ShowInfo("成功找到路径：" + path);
+                textBox29.Text = path;
+            }
+            else
+                ShowInfo("未设置路径");
+        }
+        /// <summary>
+        /// 星敏陀螺安装路径
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button18_Click(object sender, EventArgs e)
+        {
+            ShowInfo("选择安装文件路径");
+            OpenFileDialog openDlg = new OpenFileDialog();
+            if (openDlg.ShowDialog() == DialogResult.OK)
+            {
+                string localFilePath = openDlg.FileName.ToString(); //获得文件路径 
+                path = localFilePath.Substring(0, localFilePath.LastIndexOf("\\")); ;
+                ShowInfo("成功找到路径：" + path);
+                textBox13.Text = path;
+            }
+            else
+                ShowInfo("未设置路径");
         }
         /// <summary>
         /// 珞珈一号滤波

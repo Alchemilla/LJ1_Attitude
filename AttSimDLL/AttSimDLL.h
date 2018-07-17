@@ -78,6 +78,7 @@ public:
 	void readAttJitterTXT(vector<Gyro>&wMeas);
 	void preAttparam(attGFDM attMeas,Quat &q0, vector<vector<BmImStar>>&BmIm, vector<Gyro>&wMeas);
 	void preAttparamForLJ1(attLJ1 measLJ1, Quat &q0, vector<vector<BmImStar>>&BmIm, vector<Gyro>&wMeas);
+	void alinCalc(vector<Quat> qA, vector<Quat> qB, double *Err);//计算星敏A相对于B的安装
 	void predictQuat(Gyro wMeas, Quat &Qk, double dt);
 	void calcuOmega(Quat qL, Quat qR, Gyro &wTrue);
 	//转换数据
@@ -101,11 +102,12 @@ public:
 	void outputBias(double *Bias, int num, string name);
 private:
 	//升序降序函数
-	bool static LessSort(BmImStar a, BmImStar b);
+	bool static LessSort(vector<BmImStar> a, vector<BmImStar> b);
 	int nQuat, nGyro;//全局变量，四元数和陀螺的数量
 	AttParm attDat;	isStarGyro starGyro;
 	string path;
 	static double starAali[9], starBali[9], starCali[9];//星敏安装
-	static double starAali_LJ1[4], starBali_LJ1[4], gyroali_LJ1[9];//珞珈一号星敏陀螺安装（四元数形式）
+	static double starAali_LJ1[4], starBali_LJ1[4], gyroali_LJ1[9];//珞珈一号星敏陀螺安装（四元数形式）	
+	double qAalin[9], qBalin[9];//珞珈一号星敏陀螺安装
 	static double G11[3], G12[3], G13[3], G21[3], G22[3], G23[3], G31[3], G32[3], G33[3];//陀螺安装
 };

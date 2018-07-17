@@ -1353,6 +1353,18 @@ void attSim::getQuatAndGyroForLuoJia1(attLJ1 &attMeas)
 		attMeas.gy.push_back(attReadGyro);
 	}
 	fclose(fp1);
+
+	//计算星敏A相对于Ｂ的安装,并修改安装矩阵
+	double Err[9];
+	alinCalc(attMeas.qA, attMeas.qB, Err);
+	mBase.quat2matrix(starAali_LJ1[1], starAali_LJ1[2], starAali_LJ1[3], starAali_LJ1[0], qAalin);
+	mBase.quat2matrix(starBali_LJ1[1], starBali_LJ1[2], starBali_LJ1[3], starBali_LJ1[0], qBalin);
+	mBase.Multi(qBalin, Err, qAalin, 3, 3, 3);//根据星敏B修正星敏A的安装
+	string strAlin = path + "\\StarBalin.txt"; double qOut[4];
+	fp1 = fopen(strAlin.c_str(), "w");
+	mBase.matrix2quat(qAalin, qOut[1], qOut[2], qOut[3], qOut[0]);
+	fprintf(fp1, "%.9f\t%.9f\t%.9f\t%.9f\n", qOut[0], qOut[1], qOut[2], qOut[3]);
+	fclose(fp1);
 }
 //////////////////////////////////////////////////////////////////////////
 //功能：姿态仿真（15状态）
@@ -3015,11 +3027,10 @@ void attSim::preAttparamForLJ1(attLJ1 measLJ1, Quat &q0,
 	vector<vector<BmImStar>>&BmIm, vector<Gyro>&wMeas)
 {
 	double Cbj[9], Crj[9], Cbr[9], Bm[3], Im[3]; Quat qCbj;
-	double optical[3] = { 0,0,1 };
-	double qAalin[9], qBalin[9];
-	mBase.quat2matrix(starAali_LJ1[1], starAali_LJ1[2], starAali_LJ1[3], starAali_LJ1[0], qAalin);
-	mBase.quat2matrix(starBali_LJ1[1], starBali_LJ1[2], starBali_LJ1[3], starBali_LJ1[0], qBalin);
+	double optical[3] = { 0,0,1 }; double xAxis[3] = { 1,0,0 };
 
+	string measOut = path + "\\StarAdeter.txt";
+	FILE *fp = fopen(measOut.c_str(),"w");
 	vector<Quat>quatMeas;
 	for (int a = 0; a < measLJ1.qA.size(); a++)
 	{		
@@ -3029,8 +3040,23 @@ void attSim::preAttparamForLJ1(attLJ1 measLJ1, Quat &q0,
 		mBase.matrix2quat(Cbj, q0.q1, q0.q2, q0.q3, q0.q4);
 		q0.UT = measLJ1.qA[a].UT;
 		quatMeas.push_back(q0);
+		fprintf(fp, "%.9f\t%.9f\t%.9f\t%.9f\t%.9f\n", q0.UT, q0.q1, q0.q2, q0.q3, q0.q4);
 	}
+	fclose(fp);
 	calcOmegaFromST(quatMeas, "StarACalcOmega.txt");
+	measOut = path + "\\StarBdeter.txt";
+	fp = fopen(measOut.c_str(), "w");	
+	for (int a = 0; a < measLJ1.qB.size(); a++)
+	{
+		mBase.quat2matrix(measLJ1.qB[a].q1, measLJ1.qB[a].q2, measLJ1.qB[a].q3, measLJ1.qB[a].q4, Crj);
+		memcpy(Cbr, qBalin, sizeof(double) * 9);//Cbr
+		mBase.Multi(Cbr, Crj, Cbj, 3, 3, 3);
+		mBase.matrix2quat(Cbj, q0.q1, q0.q2, q0.q3, q0.q4);
+		q0.UT = measLJ1.qB[a].UT;
+		quatMeas.push_back(q0);
+		fprintf(fp, "%.9f\t%.9f\t%.9f\t%.9f\t%.9f\n", q0.UT, q0.q1, q0.q2, q0.q3, q0.q4);
+	}
+	fclose(fp);
 
 	vector<BmImStar>BmImTmp;
 	for (int a = 0; a < measLJ1.qA.size(); a++)
@@ -3050,6 +3076,15 @@ void attSim::preAttparamForLJ1(attLJ1 measLJ1, Quat &q0,
 		memcpy(BmImTmp2.Im, Im, sizeof(double) * 3);
 		BmImTmp2.UT = measLJ1.qA[a].UT;
 		BmImTmp.push_back(BmImTmp2);
+		//添加横轴X
+		mBase.Multi(Cbr, xAxis, Bm, 3, 3, 1);
+		mBase.Multi(Crj, xAxis, Im, 3, 3, 1);
+		memcpy(BmImTmp2.Bm, Bm, sizeof(double) * 3);
+		memcpy(BmImTmp2.Im, Im, sizeof(double) * 3);
+		BmImTmp2.UT = measLJ1.qA[a].UT;
+		BmImTmp.push_back(BmImTmp2);
+		BmIm.push_back(BmImTmp);
+		BmImTmp.clear();
 	}
 
 	for (int a = 0; a < measLJ1.qB.size(); a++)
@@ -3069,10 +3104,20 @@ void attSim::preAttparamForLJ1(attLJ1 measLJ1, Quat &q0,
 		memcpy(BmImTmp2.Im, Im, sizeof(double) * 3);
 		BmImTmp2.UT = measLJ1.qB[a].UT;
 		BmImTmp.push_back(BmImTmp2);
+		//添加横轴X
+		mBase.Multi(Cbr, xAxis, Bm, 3, 3, 1);
+		mBase.Multi(Crj, xAxis, Im, 3, 3, 1);
+		memcpy(BmImTmp2.Bm, Bm, sizeof(double) * 3);
+		memcpy(BmImTmp2.Im, Im, sizeof(double) * 3);
+		BmImTmp2.UT = measLJ1.qB[a].UT;
+		BmImTmp.push_back(BmImTmp2);
+		BmIm.push_back(BmImTmp);
+		BmImTmp.clear();
 	}
 	//需要排序
-	sort(BmImTmp.begin(),BmImTmp.end(),LessSort);
-	BmIm.push_back(BmImTmp);
+	sort(BmIm.begin(), BmIm.end(), LessSort);
+	//sort(BmImTmp.begin(),BmImTmp.end(),LessSort);
+	//BmIm.push_back(BmImTmp);
 	
 	double gyroOri[3], gyroTrans[3];
 	for (int a = 0; a < measLJ1.gy.size(); a++)
@@ -3080,10 +3125,46 @@ void attSim::preAttparamForLJ1(attLJ1 measLJ1, Quat &q0,
 		gyroOri[0] = measLJ1.gy.at(a).wx; gyroOri[1] = measLJ1.gy.at(a).wy; gyroOri[2] = measLJ1.gy.at(a).wz;
 		mBase.Multi(gyroali_LJ1,gyroOri,gyroTrans,3,3,1);
 		Gyro wTmp;
-		wTmp.UT = measLJ1.gy.at(a).UT; wTmp.wx = gyroTrans[0], wTmp.wy = gyroTrans[1], wTmp.wz = gyroTrans[2];
+		wTmp.UT = measLJ1.gy.at(a).UT; 
+		wTmp.wx = gyroTrans[0] / 180 * PI;
+		wTmp.wy = gyroTrans[1] / 180 * PI;
+		wTmp.wz = gyroTrans[2] / 180 * PI;
 		wMeas.push_back(wTmp);
 	}
-
+	string outpath = path + "\\Omega.txt";
+	fp = fopen(outpath.c_str(), "w");
+	for (int a=0;a<wMeas.size();a++)
+	{
+		fprintf(fp, "%.9f\t%.9f\t%.9f\t%.9f\n",wMeas[a].UT,wMeas[a].wx,wMeas[a].wy,wMeas[a].wz);
+	}
+	fclose(fp);
+}
+//求星敏B相对于星敏A的安装Cba
+void  attSim::alinCalc(vector<Quat> qA, vector<Quat> qB, double *Err)
+{
+	int m = qA.size();
+	MatrixXd starA(m, 4), starB(m, 4);
+	for (int i = 0; i < m; i++)
+	{
+		starB(i, 0) = qB[i].q1, starB(i, 1) = qB[i].q2, starB(i, 2) = qB[i].q3, starB(i, 3) = qB[i].q4;
+		starA(i, 0) = qA[i].q1, starA(i, 1) = qA[i].q2, starA(i, 2) = qA[i].q3, starA(i, 3) = qA[i].q4;
+	}
+	MatrixXd RA(3, 3 * m), RB(3, 3 * m);
+	for (int a = 0; a < m; a++)
+	{
+		double RAtmp[9], RBtmp[9];
+		double optic[] = { 0,0,1 };
+		mBase.quat2matrix(starA(a, 0), starA(a, 1), starA(a, 2), starA(a, 3), RAtmp);
+		mBase.quat2matrix(starB(a, 0), starB(a, 1), starB(a, 2), starB(a, 3), RBtmp);
+		Map<rMatrixXd> RAtmp2(RAtmp, 3, 3);
+		Map<rMatrixXd> RBtmp2(RBtmp, 3, 3);
+		RA.block<3, 3>(0, 3 * a) = RAtmp2;
+		RB.block<3, 3>(0, 3 * a) = RBtmp2;
+	}
+	MatrixXd Cba(3, 3);
+	Cba = RB*RA.transpose()*(RA*RA.transpose()).inverse();
+	double Cm[] = { Cba(0),Cba(3),Cba(6),Cba(1),Cba(4),Cba(7),  Cba(2),Cba(5) , Cba(8) };
+	memcpy(Err, Cm, sizeof(double) * 9);
 }
 //////////////////////////////////////////////////////////////////////////
 //功能：根据角速度预测四元数
@@ -3610,7 +3691,7 @@ void attSim::outputBias(double *Bias, int num, string name)
 /////////////////////////////////////////
 //定义升序降序排列的函数，从小到大
 ////////////////////////////////////////
-inline bool attSim::LessSort(BmImStar a, BmImStar b) { return a.UT < b.UT; }
+inline bool attSim::LessSort(vector<BmImStar> a, vector<BmImStar> b) { return a[0].UT < b[0].UT; }
 
 /////////////////////////////////////////////////////////////////////////
 //功能：姿态仿真（外部接口）
