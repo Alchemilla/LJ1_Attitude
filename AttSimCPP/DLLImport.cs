@@ -154,6 +154,12 @@ namespace AttSimCPP
         /// <param name="path"></param>
         [DllImport("AttSimDLL.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern void luojia1AttitudeDeter(string path, AttParm mAtt, bool isBinFilter);
+        /// <summary>
+        /// 珞珈一号求取星敏相对安装
+        /// </summary>
+        /// <param name="path"></param>
+        [DllImport("AttSimDLL.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void luojia1StarAlin(string path);
 
         //以下函数暂时不用
         /// <summary>

@@ -1360,7 +1360,7 @@ void attSim::getQuatAndGyroForLuoJia1(attLJ1 &attMeas)
 	mBase.quat2matrix(starAali_LJ1[1], starAali_LJ1[2], starAali_LJ1[3], starAali_LJ1[0], qAalin);
 	mBase.quat2matrix(starBali_LJ1[1], starBali_LJ1[2], starBali_LJ1[3], starBali_LJ1[0], qBalin);
 	mBase.Multi(qBalin, Err, qAalin, 3, 3, 3);//根据星敏B修正星敏A的安装
-	string strAlin = path + "\\StarBalin.txt"; double qOut[4];
+	string strAlin = path + "\\StarAalin.txt"; double qOut[4];
 	fp1 = fopen(strAlin.c_str(), "w");
 	mBase.matrix2quat(qAalin, qOut[1], qOut[2], qOut[3], qOut[0]);
 	fprintf(fp1, "%.9f\t%.9f\t%.9f\t%.9f\n", qOut[0], qOut[1], qOut[2], qOut[3]);
@@ -3829,7 +3829,19 @@ void luojia1AttitudeDeter(char * workpath, AttParm mAtt, BOOL isBinFilter)
 		luojia_1.EKFForAndBackStarOpticAxis(BmIm, wMeas, q0);//主要为了输出常规滤波结果
 	}
 }
-
+/////////////////////////////////////////////////////////////////////////
+//功能：珞珈一号星敏标定（外部接口）
+//作者：GZC
+//日期：2018.07.19
+//////////////////////////////////////////////////////////////////////////
+void luojia1StarAlin(char * workpath)
+{
+	attSim luojia_1;
+	luojia_1.path = workpath;
+	//从文件读取星敏陀螺数据
+	attLJ1 measLJ1; vector<vector<BmImStar>>BmIm; vector<Gyro>wMeas; Quat q0;
+	luojia_1.getQuatAndGyroForLuoJia1(measLJ1);
+}
 
 //////////////////////////////////////////////////////////////////////////
 //功能：姿态仿真程序（仅仿真四元数和陀螺数据）

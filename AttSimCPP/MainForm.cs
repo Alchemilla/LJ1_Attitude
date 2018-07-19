@@ -604,6 +604,7 @@ namespace AttSimCPP
             }
             DLLImport.ExternalData(path,mAtt);
         }
+
         /// <summary>
         /// 事后定姿默认参数
         /// </summary>
@@ -923,6 +924,29 @@ namespace AttSimCPP
             }
 
             ShowInfo("姿态确定完毕");
+            progressBar1.Value = 100;
+        }
+        /// <summary>
+        /// 珞珈一号求A星敏相对B星敏安装
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button21_Click(object sender, EventArgs e)
+        {
+            //姿态文件路径
+            mAtt.sSimAtt = textBox29.Text;
+            progressBar1.Minimum = 0;
+            progressBar1.Maximum = 100;
+            progressBar1.Value = 40;
+            if (!File.Exists(path + "\\qa.txt") || !File.Exists(path + "\\qb.txt") || !File.Exists(path + "\\gyro.txt"))
+            {
+                ShowInfo("没有qa,qb,gyro文件");
+                MessageBox.Show("请设置真实数据路径（包含qa,qb,gyro的txt文件）", "警告", MessageBoxButtons.OK);
+                return;
+            }
+            ShowInfo("开始求取相对安装...");
+            DLLImport.luojia1StarAlin(path);
+            ShowInfo("相对安装求取完毕");
             progressBar1.Value = 100;
         }
 

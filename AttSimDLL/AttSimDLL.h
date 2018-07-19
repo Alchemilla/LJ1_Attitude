@@ -45,6 +45,7 @@ ATTSIMDLL void ExternalFileAttitudeSim(char * workpath, AttParm mAtt, isStarGyro
 ATTSIMDLL void ExternalFileAttitudeDeter(char * workpath, AttParm mAtt, isStarGyro starGy, BOOL isBinFilter);
 //珞珈一号数据处理
 ATTSIMDLL void luojia1AttitudeDeter(char * workpath, AttParm mAtt, BOOL isBinFilter);
+ATTSIMDLL void luojia1StarAlin(char * workpath);
 
 class attSim
 {
@@ -100,12 +101,12 @@ public:
 	void outputQuat(vector<Quat>qOut, string name);
 	void outputQuatZY3(vector<Quat>qOut, string name);
 	void outputBias(double *Bias, int num, string name);
+	string path;
 private:
 	//升序降序函数
 	bool static LessSort(vector<BmImStar> a, vector<BmImStar> b);
 	int nQuat, nGyro;//全局变量，四元数和陀螺的数量
 	AttParm attDat;	isStarGyro starGyro;
-	string path;
 	static double starAali[9], starBali[9], starCali[9];//星敏安装
 	static double starAali_LJ1[4], starBali_LJ1[4], gyroali_LJ1[9];//珞珈一号星敏陀螺安装（四元数形式）	
 	double qAalin[9], qBalin[9];//珞珈一号星敏陀螺安装
